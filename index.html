@@ -1,0 +1,93 @@
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+const classRoles = {
+  "Cazador": ["DPS"],
+  "Picaro": ["DPS"],
+  "Mago": ["DPS"],
+  "Brujo": ["DPS"],
+  "Sacerdote": ["Healer", "DPS"],
+  "Chaman": ["Healer", "DPS"],
+  "Guerrero": ["Tanque", "DPS"],
+  "Paladin": ["Healer", "Tanque", "DPS"],
+  "Druida": ["Healer", "Tanque", "DPS"]
+};
+
+const classSelect = document.getElementById("classSelect");
+const roleSelect = document.getElementById("roleSelect");
+const form = document.getElementById("form");
+const table = document.getElementById("table");
+
+function getData() {
+  return JSON.parse(localStorage.getItem("records") || "[]");
+}
+
+function saveData(data) {
+  localStorage.setItem("records", JSON.stringify(data));
+}
+
+classSelect.addEventListener("change", () => {
+  const selectedClass = classSelect.value;
+  roleSelect.innerHTML = "<option value=''>Rol</option>";
+
+  if (classRoles[selectedClass]) {
+    classRoles[selectedClass].forEach(role => {
+      const opt = document.createElement("option");
+      opt.value = role;
+      opt.textContent = role;
+      roleSelect.appendChild(opt);
+    });
+  }
+});
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(form));
+
+  const records = getData();
+  records.push(data);
+  saveData(records);
+
+  form.reset();
+  roleSelect.innerHTML = "<option value=''>Rol</option>";
+  loadData();
+});
+
+function loadData() {
+  const data = getData();
+  table.innerHTML = "";
+
+  data.forEach(r => {
+    table.innerHTML += `
+      <tr>
+        <td>${r.name}</td>
+        <td>${r.class}</td>
+        <td>${r.role}</td>
+        <td>${r.faction}</td>
+        <td><a href="${r.logs}" target="_blank">Ver</a></td>
+      </tr>
+    `;
+  });
+}
+
+function exportCSV() {
+  const data = getData();
+  let csv = "Nombre,Clase,Rol,Facción,Logs\n";
+
+  data.forEach(r => {
+    csv += `${r.name},${r.class},${r.role},${r.faction},${r.logs}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "guild.csv";
+  a.click();
+}
+
+loadData();
+});
+
+</script>
