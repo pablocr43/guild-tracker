@@ -1,93 +1,179 @@
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Hermandad - WoW TBC</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #1a1a2e; color: #eee; padding: 20px; max-width: 900px; margin: 0 auto; }
+    h1 { color: #f4d03f; text-align: center; }
+    form { background: #16213e; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    label { display: flex; flex-direction: column; font-size: 0.9rem; color: #a0a0a0; }
+    input, select { padding: 8px; margin-top: 5px; border: 1px solid #0f3460; border-radius: 4px; background: #0f3460; color: #fff; }
+    button { grid-column: span 2; padding: 10px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #c13651; }
+    table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+    th { background: #0f3460; color: #f4d03f; }
+    tr:hover { background: #1f2b47; }
+    a { color: #4cc9f0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .actions { margin-bottom: 15px; text-align: right; }
+    .actions button { grid-column: auto; padding: 8px 16px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
 
-const classRoles = {
-  "Cazador": ["DPS"],
-  "Picaro": ["DPS"],
-  "Mago": ["DPS"],
-  "Brujo": ["DPS"],
-  "Sacerdote": ["Healer", "DPS"],
-  "Chaman": ["Healer", "DPS"],
-  "Guerrero": ["Tanque", "DPS"],
-  "Paladin": ["Healer", "Tanque", "DPS"],
-  "Druida": ["Healer", "Tanque", "DPS"]
-};
+  <h1>⚔️ Gestión de Hermandad</h1>
 
-const classSelect = document.getElementById("classSelect");
-const roleSelect = document.getElementById("roleSelect");
-const form = document.getElementById("form");
-const table = document.getElementById("table");
+  <form id="form">
+    <label>
+      Nombre
+      <input type="text" name="name" required>
+    </label>
+    <label>
+      Clase
+      <select id="classSelect" name="class" required>
+        <option value="">Seleccionar</option>
+        <option value="Cazador">Cazador</option>
+        <option value="Picaro">Pícaro</option>
+        <option value="Mago">Mago</option>
+        <option value="Brujo">Brujo</option>
+        <option value="Sacerdote">Sacerdote</option>
+        <option value="Chaman">Chamán</option>
+        <option value="Guerrero">Guerrero</option>
+        <option value="Paladin">Paladín</option>
+        <option value="Druida">Druida</option>
+      </select>
+    </label>
+    <label>
+      Rol
+      <select id="roleSelect" name="role" required>
+        <option value="">Rol</option>
+      </select>
+    </label>
+    <label>
+      Facción
+      <select name="faction" required>
+        <option value="">Seleccionar</option>
+        <option value="Alianza">Alianza</option>
+        <option value="Horda">Horda</option>
+      </select>
+    </label>
+    <label>
+      Logs (URL)
+      <input type="url" name="logs" placeholder="https://..." required>
+    </label>
+    <button type="submit">➕ Agregar Miembro</button>
+  </form>
 
-function getData() {
-  return JSON.parse(localStorage.getItem("records") || "[]");
-}
+  <div class="actions">
+    <button onclick="exportCSV()">📥 Exportar CSV</button>
+  </div>
 
-function saveData(data) {
-  localStorage.setItem("records", JSON.stringify(data));
-}
-
-classSelect.addEventListener("change", () => {
-  const selectedClass = classSelect.value;
-  roleSelect.innerHTML = "<option value=''>Rol</option>";
-
-  if (classRoles[selectedClass]) {
-    classRoles[selectedClass].forEach(role => {
-      const opt = document.createElement("option");
-      opt.value = role;
-      opt.textContent = role;
-      roleSelect.appendChild(opt);
-    });
-  }
-});
-
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(form));
-
-  const records = getData();
-  records.push(data);
-  saveData(records);
-
-  form.reset();
-  roleSelect.innerHTML = "<option value=''>Rol</option>";
-  loadData();
-});
-
-function loadData() {
-  const data = getData();
-  table.innerHTML = "";
-
-  data.forEach(r => {
-    table.innerHTML += `
+  <table>
+    <thead>
       <tr>
-        <td>${r.name}</td>
-        <td>${r.class}</td>
-        <td>${r.role}</td>
-        <td>${r.faction}</td>
-        <td><a href="${r.logs}" target="_blank">Ver</a></td>
+        <th>Nombre</th>
+        <th>Clase</th>
+        <th>Rol</th>
+        <th>Facción</th>
+        <th>Logs</th>
       </tr>
-    `;
-  });
-}
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
 
-function exportCSV() {
-  const data = getData();
-  let csv = "Nombre,Clase,Rol,Facción,Logs\n";
+  <script>
+    const classRoles = {
+      "Cazador": ["DPS"],
+      "Picaro": ["DPS"],
+      "Mago": ["DPS"],
+      "Brujo": ["DPS"],
+      "Sacerdote": ["Healer", "DPS"],
+      "Chaman": ["Healer", "DPS"],
+      "Guerrero": ["Tanque", "DPS"],
+      "Paladin": ["Healer", "Tanque", "DPS"],
+      "Druida": ["Healer", "Tanque", "DPS"]
+    };
 
-  data.forEach(r => {
-    csv += `${r.name},${r.class},${r.role},${r.faction},${r.logs}\n`;
-  });
+    const classSelect = document.getElementById("classSelect");
+    const roleSelect = document.getElementById("roleSelect");
+    const form = document.getElementById("form");
+    const table = document.getElementById("table");
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
+    function getData() {
+      return JSON.parse(localStorage.getItem("records") || "[]");
+    }
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "guild.csv";
-  a.click();
-}
+    function saveData(data) {
+      localStorage.setItem("records", JSON.stringify(data));
+    }
 
-loadData();
-});
+    classSelect.addEventListener("change", () => {
+      const selectedClass = classSelect.value;
+      roleSelect.innerHTML = "<option value=''>Rol</option>";
 
-</script>
+      if (classRoles[selectedClass]) {
+        classRoles[selectedClass].forEach(role => {
+          const opt = document.createElement("option");
+          opt.value = role;
+          opt.textContent = role;
+          roleSelect.appendChild(opt);
+        });
+      }
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      const records = getData();
+      records.push(data);
+      saveData(records);
+
+      form.reset();
+      roleSelect.innerHTML = "<option value=''>Rol</option>";
+      loadData();
+    });
+
+    function loadData() {
+      const data = getData();
+      table.innerHTML = "";
+
+      data.forEach(r => {
+        table.innerHTML += `
+          <tr>
+            <td>${r.name}</td>
+            <td>${r.class}</td>
+            <td>${r.role}</td>
+            <td>${r.faction}</td>
+            <td><a href="${r.logs}" target="_blank">Ver</a></td>
+          </tr>
+        `;
+      });
+    }
+
+    function exportCSV() {
+      const data = getData();
+      let csv = "Nombre,Clase,Rol,Facción,Logs\n";
+
+      data.forEach(r => {
+        csv += `${r.name},${r.class},${r.role},${r.faction},${r.logs}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "guild.csv";
+      a.click();
+    }
+
+    loadData();
+  </script>
+
+</body>
+</html>
